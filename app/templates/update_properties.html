@@ -1,0 +1,994 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Update Property</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #f5f6f8;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            margin-top: 35px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .image-section {
+            margin-top: 20px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .image-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 6px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .image-card input[type="file"] {
+            width: 100%;
+            font-size: 12px;
+        }
+
+        .delete-btn {
+            margin-top: 8px;
+            width: 100%;
+            padding: 8px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #b02a37;
+        }
+
+        .replace-label {
+            display: block;
+            padding: 8px;
+            background: #222;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .replace-label:hover {
+            background: #444;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        .add-image-box {
+            margin-top: 15px;
+            padding: 20px;
+            border: 2px dashed #bbb;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .add-image-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #111;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .add-image-btn:hover {
+            background: #333;
+        }
+
+        .selected-files {
+            margin-top: 10px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .main-image {
+            max-width: 250px;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .main-image-box {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .main-image-box img {
+            display: block;
+            width: 250px;
+            height: 170px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .save-btn {
+            margin-top: 35px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 7px;
+            background: #198754;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .save-btn:hover {
+            background: #157347;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #333;
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <a href="{% url 'submit_properties' %}" class="back-btn">
+        ← Back to Properties
+    </a>
+
+    <h1>Update Property</h1>
+
+
+    <!-- =====================================================
+         MAIN FORM
+    ====================================================== -->
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+        id="updatePropertyForm"
+    >
+
+        {% csrf_token %}
+
+
+        <!-- =================================================
+             PROPERTY DETAILS
+        ================================================== -->
+
+        <div class="form-group">
+            <label>Furnishing</label>
+
+            <input
+                type="text"
+                name="furnished"
+                value="{{ property.furnished }}"
+                required
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>Location</label>
+
+            <input
+                type="text"
+                name="location"
+                value="{{ property.location }}"
+                required
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>Price</label>
+
+            <input
+                type="number"
+                name="price"
+                value="{{ property.price }}"
+                step="0.01"
+                required
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>BHK</label>
+
+            <input
+                type="number"
+                name="bhk"
+                value="{{ property.bhk }}"
+                required
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>Contact</label>
+
+            <input
+                type="text"
+                name="contact"
+                value="{{ property.contact }}"
+                required
+            >
+        </div>
+
+
+        <!-- =================================================
+             AVAILABILITY
+        ================================================== -->
+
+        <div class="form-group">
+
+            <label>Availability</label>
+
+            <select name="available">
+
+                {% if property.available %}
+                    <option value="True" selected>Available</option>
+                    <option value="False">Unavailable</option>
+                {% else %}
+                    <option value="True">Available</option>
+                    <option value="False" selected>Unavailable</option>
+                {% endif %}
+
+            </select>
+
+        </div>
+
+
+
+        <!-- =================================================
+             MAIN HOUSE IMAGE
+        ================================================== -->
+
+        <h2>Main House Image</h2>
+
+        {% if property.house_image %}
+
+            <div class="main-image-box">
+
+                <img
+                    src="{{ property.house_image.url }}"
+                    alt="House Image"
+                    class="main-image"
+                >
+
+            </div>
+
+        {% else %}
+
+            <p>No house image uploaded.</p>
+
+        {% endif %}
+
+
+
+        <!-- =================================================
+             MAIN HALL IMAGE
+        ================================================== -->
+
+        <h2>Main Hall Image</h2>
+
+        {% if property.hall_image %}
+
+            <div class="main-image-box">
+
+                <img
+                    src="{{ property.hall_image.url }}"
+                    alt="Main Hall Image"
+                >
+
+
+                <!-- Replace Main Hall -->
+
+                <label class="replace-label">
+
+                    Replace Main Hall Image
+
+                    <input
+                        type="file"
+                        name="hall_image_replace"
+                        accept="image/*"
+                        class="hidden-input"
+                        onchange="showSelectedFile(
+                            'hall_replace',
+                            'hall-replace-selected'
+                        )"
+                        id="hall_replace"
+                    >
+
+                </label>
+
+
+                <div
+                    id="hall-replace-selected"
+                    class="selected-files"
+                ></div>
+
+
+                <!-- Delete Main Hall -->
+
+                <button
+                    type="submit"
+                    name="delete_hall"
+                    value="true"
+                    class="delete-btn"
+                    onclick="return confirm('Delete the main Hall image?');"
+                >
+                    Delete Main Hall Image
+                </button>
+
+            </div>
+
+        {% else %}
+
+            <p>No main Hall image uploaded.</p>
+
+            <label class="replace-label">
+
+                Add Main Hall Image
+
+                <input
+                    type="file"
+                    name="hall_image_replace"
+                    accept="image/*"
+                    class="hidden-input"
+                >
+
+            </label>
+
+        {% endif %}
+
+
+
+        <!-- =================================================
+             ADDITIONAL HALL IMAGES
+        ================================================== -->
+
+        <h2>Additional Hall Images</h2>
+
+
+        {% with hall_count=0 %}
+
+        <div class="image-grid">
+
+            {% for image in property.images.all %}
+
+                {% if image.image_type == "hall" %}
+
+                    <div class="image-card">
+
+                        <img
+                            src="{{ image.image.url }}"
+                            alt="Hall Image"
+                        >
+
+
+                        <!-- Replace Existing Hall Image -->
+
+                        <label class="replace-label">
+
+                            Replace Image
+
+                            <input
+                                type="file"
+                                name="replace_image_{{ image.id }}"
+                                accept="image/*"
+                                class="hidden-input"
+                                onchange="showSelectedFile(
+                                    'replace_{{ image.id }}',
+                                    'selected_{{ image.id }}'
+                                )"
+                                id="replace_{{ image.id }}"
+                            >
+
+                        </label>
+
+
+                        <div
+                            id="selected_{{ image.id }}"
+                            class="selected-files"
+                        ></div>
+
+
+                        <!-- Delete Existing Hall Image -->
+
+                        <button
+                            type="submit"
+                            name="delete_image"
+                            value="{{ image.id }}"
+                            class="delete-btn"
+                            onclick="return confirm('Delete this Hall image?');"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+        {% endwith %}
+
+
+
+        <!-- =================================================
+             ADD NEW HALL IMAGES
+        ================================================== -->
+
+        <div class="add-image-box">
+
+            <label
+                for="hall_add"
+                class="add-image-btn"
+            >
+                + Add Hall Images
+            </label>
+
+            <input
+                type="file"
+                name="hall_images"
+                id="hall_add"
+                accept="image/*"
+                multiple
+                class="hidden-input"
+                onchange="showSelectedFiles(
+                    'hall_add',
+                    'hall-selected'
+                )"
+            >
+
+            <div
+                id="hall-selected"
+                class="selected-files"
+            ></div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             BEDROOM IMAGES
+        ================================================== -->
+
+        <h2>Bedroom Images</h2>
+
+        <div class="image-grid">
+
+            {% for image in property.images.all %}
+
+                {% if image.image_type == "bedroom" %}
+
+                    <div class="image-card">
+
+                        <img
+                            src="{{ image.image.url }}"
+                            alt="Bedroom Image"
+                        >
+
+                        <label class="replace-label">
+
+                            Replace Image
+
+                            <input
+                                type="file"
+                                name="replace_image_{{ image.id }}"
+                                accept="image/*"
+                                class="hidden-input"
+                                onchange="showSelectedFile(
+                                    'bedroom_replace_{{ image.id }}',
+                                    'bedroom_selected_{{ image.id }}'
+                                )"
+                                id="bedroom_replace_{{ image.id }}"
+                            >
+
+                        </label>
+
+                        <div
+                            id="bedroom_selected_{{ image.id }}"
+                            class="selected-files"
+                        ></div>
+
+                        <button
+                            type="submit"
+                            name="delete_image"
+                            value="{{ image.id }}"
+                            class="delete-btn"
+                            onclick="return confirm('Delete this Bedroom image?');"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="add-image-box">
+
+            <label
+                for="bedroom_add"
+                class="add-image-btn"
+            >
+                + Add Bedroom Images
+            </label>
+
+            <input
+                type="file"
+                name="bedroom_image"
+                id="bedroom_add"
+                accept="image/*"
+                multiple
+                class="hidden-input"
+                onchange="showSelectedFiles(
+                    'bedroom_add',
+                    'bedroom-selected'
+                )"
+            >
+
+            <div
+                id="bedroom-selected"
+                class="selected-files"
+            ></div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             BATHROOM IMAGES
+        ================================================== -->
+
+        <h2>Bathroom Images</h2>
+
+        <div class="image-grid">
+
+            {% for image in property.images.all %}
+
+                {% if image.image_type == "bathroom" %}
+
+                    <div class="image-card">
+
+                        <img
+                            src="{{ image.image.url }}"
+                            alt="Bathroom Image"
+                        >
+
+                        <label class="replace-label">
+
+                            Replace Image
+
+                            <input
+                                type="file"
+                                name="replace_image_{{ image.id }}"
+                                accept="image/*"
+                                class="hidden-input"
+                                onchange="showSelectedFile(
+                                    'bathroom_replace_{{ image.id }}',
+                                    'bathroom_selected_{{ image.id }}'
+                                )"
+                                id="bathroom_replace_{{ image.id }}"
+                            >
+
+                        </label>
+
+                        <div
+                            id="bathroom_selected_{{ image.id }}"
+                            class="selected-files"
+                        ></div>
+
+                        <button
+                            type="submit"
+                            name="delete_image"
+                            value="{{ image.id }}"
+                            class="delete-btn"
+                            onclick="return confirm('Delete this Bathroom image?');"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="add-image-box">
+
+            <label
+                for="bathroom_add"
+                class="add-image-btn"
+            >
+                + Add Bathroom Images
+            </label>
+
+            <input
+                type="file"
+                name="bathroom_image"
+                id="bathroom_add"
+                accept="image/*"
+                multiple
+                class="hidden-input"
+                onchange="showSelectedFiles(
+                    'bathroom_add',
+                    'bathroom-selected'
+                )"
+            >
+
+            <div
+                id="bathroom-selected"
+                class="selected-files"
+            ></div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             KITCHEN IMAGES
+        ================================================== -->
+
+        <h2>Kitchen Images</h2>
+
+        <div class="image-grid">
+
+            {% for image in property.images.all %}
+
+                {% if image.image_type == "kitchen" %}
+
+                    <div class="image-card">
+
+                        <img
+                            src="{{ image.image.url }}"
+                            alt="Kitchen Image"
+                        >
+
+                        <label class="replace-label">
+
+                            Replace Image
+
+                            <input
+                                type="file"
+                                name="replace_image_{{ image.id }}"
+                                accept="image/*"
+                                class="hidden-input"
+                                onchange="showSelectedFile(
+                                    'kitchen_replace_{{ image.id }}',
+                                    'kitchen_selected_{{ image.id }}'
+                                )"
+                                id="kitchen_replace_{{ image.id }}"
+                            >
+
+                        </label>
+
+                        <div
+                            id="kitchen_selected_{{ image.id }}"
+                            class="selected-files"
+                        ></div>
+
+                        <button
+                            type="submit"
+                            name="delete_image"
+                            value="{{ image.id }}"
+                            class="delete-btn"
+                            onclick="return confirm('Delete this Kitchen image?');"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="add-image-box">
+
+            <label
+                for="kitchen_add"
+                class="add-image-btn"
+            >
+                + Add Kitchen Images
+            </label>
+
+            <input
+                type="file"
+                name="kitchen_image"
+                id="kitchen_add"
+                accept="image/*"
+                multiple
+                class="hidden-input"
+                onchange="showSelectedFiles(
+                    'kitchen_add',
+                    'kitchen-selected'
+                )"
+            >
+
+            <div
+                id="kitchen-selected"
+                class="selected-files"
+            ></div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             BALCONY IMAGES
+        ================================================== -->
+
+        <h2>Balcony Images</h2>
+
+        <div class="image-grid">
+
+            {% for image in property.images.all %}
+
+                {% if image.image_type == "balcony" %}
+
+                    <div class="image-card">
+
+                        <img
+                            src="{{ image.image.url }}"
+                            alt="Balcony Image"
+                        >
+
+                        <label class="replace-label">
+
+                            Replace Image
+
+                            <input
+                                type="file"
+                                name="replace_image_{{ image.id }}"
+                                accept="image/*"
+                                class="hidden-input"
+                                onchange="showSelectedFile(
+                                    'balcony_replace_{{ image.id }}',
+                                    'balcony_selected_{{ image.id }}'
+                                )"
+                                id="balcony_replace_{{ image.id }}"
+                            >
+
+                        </label>
+
+                        <div
+                            id="balcony_selected_{{ image.id }}"
+                            class="selected-files"
+                        ></div>
+
+                        <button
+                            type="submit"
+                            name="delete_image"
+                            value="{{ image.id }}"
+                            class="delete-btn"
+                            onclick="return confirm('Delete this Balcony image?');"
+                        >
+                            Delete
+                        </button>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="add-image-box">
+
+            <label
+                for="balcony_add"
+                class="add-image-btn"
+            >
+                + Add Balcony Images
+            </label>
+
+            <input
+                type="file"
+                name="balcony_image"
+                id="balcony_add"
+                accept="image/*"
+                multiple
+                class="hidden-input"
+                onchange="showSelectedFiles(
+                    'balcony_add',
+                    'balcony-selected'
+                )"
+            >
+
+            <div
+                id="balcony-selected"
+                class="selected-files"
+            ></div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             SAVE
+        ================================================== -->
+
+        <button
+    type="submit"
+    class="save-btn"
+    onclick="return confirmSaveChanges();"
+>
+    Save Changes
+</button>
+
+    </form>
+
+</div>
+
+
+
+<script>
+
+/* =========================================================
+   SINGLE FILE
+========================================================= */
+
+function confirmSaveChanges() {
+    return confirm("Are you sure you want to save these changes?");
+}
+
+function showSelectedFile(inputId, messageId) {
+
+    const input = document.getElementById(inputId);
+    const message = document.getElementById(messageId);
+
+    if (!input || !message) {
+        return;
+    }
+
+    if (input.files.length > 0) {
+
+        message.textContent =
+            "Selected: " + input.files[0].name;
+
+    } else {
+
+        message.textContent = "";
+
+    }
+}
+
+
+/* =========================================================
+   MULTIPLE FILES
+========================================================= */
+
+function showSelectedFiles(inputId, messageId) {
+
+    const input = document.getElementById(inputId);
+    const message = document.getElementById(messageId);
+
+    if (!input || !message) {
+        return;
+    }
+
+    if (input.files.length === 0) {
+
+        message.textContent = "";
+        return;
+
+    }
+
+
+    if (input.files.length === 1) {
+
+        message.textContent =
+            "Selected: " + input.files[0].name;
+
+    } else {
+
+        message.textContent =
+            input.files.length + " images selected";
+
+    }
+
+}
+
+</script>
+
+
+</body>
+</html>

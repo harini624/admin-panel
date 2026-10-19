@@ -14,6 +14,7 @@ from app.models import Properties, PropertyImage
 # ADMIN PROPERTY PAGE
 # =========================================================
 
+
 def submit_properties(request):
 
     if request.method == "POST":
@@ -26,6 +27,7 @@ def submit_properties(request):
 
         hall_image = request.FILES.get("hall_image")
 
+        # Create the property first.
         property = Properties.objects.create(
             furnished=furnished,
             location=location,
@@ -37,127 +39,124 @@ def submit_properties(request):
             available=True
         )
 
-        # Bedroom images
+        # Save bedroom images.
         bedroom_images = request.FILES.getlist("bedroom_image")
 
         for image in bedroom_images:
-
             PropertyImage.objects.create(
                 property=property,
                 image=image,
                 image_type="bedroom"
             )
 
-        # Bathroom images
+        # Save bathroom images.
         bathroom_images = request.FILES.getlist("bathroom_image")
 
         for image in bathroom_images:
-
             PropertyImage.objects.create(
                 property=property,
                 image=image,
                 image_type="bathroom"
             )
 
-        # Kitchen images
+        # Save kitchen images.
         kitchen_images = request.FILES.getlist("kitchen_image")
 
         for image in kitchen_images:
-
             PropertyImage.objects.create(
                 property=property,
                 image=image,
                 image_type="kitchen"
             )
 
-        # Balcony images
+        # Save balcony images.
         balcony_images = request.FILES.getlist("balcony_image")
 
         for image in balcony_images:
-
             PropertyImage.objects.create(
                 property=property,
                 image=image,
                 image_type="balcony"
             )
 
+        # DEBUG: verify that all images were received and saved.
+        print("\n========== PROPERTY IMAGE DEBUG ==========")
+        print("Property ID:", property.id)
+        print("Uploaded file fields:", list(request.FILES.keys()))
+        print("Bedroom images received:", len(bedroom_images))
+        print("Bathroom images received:", len(bathroom_images))
+        print("Kitchen images received:", len(kitchen_images))
+        print("Balcony images received:", len(balcony_images))
+        print("Total gallery images saved:", property.images.count())
+
+        for saved_image in property.images.all():
+            print(
+                "Saved image:",
+                saved_image.image.name,
+                "| Type:",
+                saved_image.image_type
+            )
+
+        print("==========================================\n")
+
+        messages.success(
+            request,
+            "Property and gallery images saved successfully."
+        )
+
         return redirect("submit_properties")
 
-
-    # -----------------------------------------------------
     # SEARCH
-    # -----------------------------------------------------
-
     search = request.GET.get("search", "")
 
     properties = Properties.objects.all().order_by("-id")
 
     if search:
-
         properties = properties.filter(
             Q(furnished__icontains=search) |
             Q(location__icontains=search) |
             Q(contact__icontains=search)
         )
 
-
-    # -----------------------------------------------------
     # FILTER
-    # -----------------------------------------------------
-
     status = request.GET.get("status", "")
 
     if status == "available":
-
-        properties = properties.filter(
-            available=True
-        )
+        properties = properties.filter(available=True)
 
     elif status == "unavailable":
-
-        properties = properties.filter(
-            available=False
-        )
+        properties = properties.filter(available=False)
 
     elif status == "published":
-
-        properties = properties.filter(
-            published=True
-        )
+        properties = properties.filter(published=True)
 
     elif status == "unpublished":
+        properties = properties.filter(published=False)
 
-        properties = properties.filter(
-            published=False
-        )
-
-
-    
-
+    # DASHBOARD COUNTS
     total_properties = Properties.objects.count()
 
-    # Count published properties
     published_count = Properties.objects.filter(
-    published=True
-).count()
+        published=True
+    ).count()
 
-    # Count available properties
     available_count = Properties.objects.filter(
-    available=True
+        available=True
     ).count()
 
     return render(
-    request,
-    "submit_properties.html",
-    {
-        "properties": properties,
-        "search": search,
-        "status": status,
-        "total_properties": total_properties,
-        "published_count": published_count,
-        "available_count": available_count,
-    }
-)
+        request,
+        "submit_properties.html",
+        {
+            "properties": properties,
+            "search": search,
+            "status": status,
+            "total_properties": total_properties,
+            "published_count": published_count,
+            "available_count": available_count,
+        }
+    )
+
 def update_property(request, id):
 
     property = get_object_or_404(Properties, id=id)
@@ -361,51 +360,84 @@ def delete_property(request, id):
 
 # =========================================================
 # PUBLISH PROPERTY
-# =========================================================
+
 @require_POST
-def publish_property(request,id):
-    property_obj = get_object_or_404(
-        Properties,
-        id=id
-    )
+def publish_property(request, id):
+    property_obj = get_object_or_404(Properties, id=id)
 
     if not property_obj.available:
         messages.error(
             request,
             "This property is unavailable and cannot be published."
         )
-        return redirect("your_dashboard_url_name")
+        return redirect("submit_properties")
 
-    # The receiving API URL and token will be configured
-    # after we set up the client website.
     api_url = settings.CLIENT_WEBSITE_API_URL
-    api_token = settings.CLIENT_WEBSITE_API_TOKEN
+    api_token = settings.RECEIVE_PROPERTY_API_TOKEN
 
     property_data = {
-        "source_id": property_obj.id,
+        "source_property_id": str(property_obj.id),
         "furnished": property_obj.furnished,
         "location": property_obj.location,
         "price": str(property_obj.price),
-        "bhk": property_obj.bhk,
+        "bhk": str(property_obj.bhk),
         "contact": property_obj.contact,
-        "available": property_obj.available,
-        "house_image_url": (
-            request.build_absolute_uri(property_obj.house_image.url)
-    if property_obj.house_image
-    else ""
-    ),
+        "published": "true",
+        "available": str(property_obj.available).lower(),
     }
 
+    files = {}
+    opened_files = []
+
     try:
+        # Send the main images.
+        for field_name in ("house_image", "hall_image"):
+            image_field = getattr(property_obj, field_name, None)
+
+            if image_field and image_field.name:
+                image_file = image_field.open("rb")
+                opened_files.append(image_file)
+
+                files[field_name] = (
+                    image_field.name.split("/")[-1],
+                    image_file,
+                    "application/octet-stream",
+                )
+
+        # Send all gallery images, starting from index 0.
+        for index, gallery_image in enumerate(
+            property_obj.images.all()
+        ):
+            image_field = gallery_image.image
+
+            if image_field and image_field.name:
+                image_file = image_field.open("rb")
+                opened_files.append(image_file)
+
+                files["gallery_{}".format(index)] = (
+                    image_field.name.split("/")[-1],
+                    image_file,
+                    "application/octet-stream",
+                )
+
+                # Send the image type as ordinary POST data.
+                property_data["gallery_type_{}".format(index)] = (
+                    gallery_image.image_type or "gallery"
+                )
+
         response = requests.post(
-            settings.CLIENT_WEBSITE_API_URL,
-            json=property_data,
+            api_url,
+            data=property_data,
+            files=files or None,
             headers={
-                "Authorization": ("Token " + settings.CLIENT_WEBSITE_API_TOKEN
-                   )
+                "Authorization": "Bearer " + api_token
             },
             timeout=20,
         )
+
+        print("DEBUG: Receiver status:", response.status_code)
+        print("DEBUG: Receiver response:", response.text)
+
         response.raise_for_status()
 
         property_obj.published = True
@@ -416,13 +448,19 @@ def publish_property(request,id):
             "Property published to the client website successfully."
         )
 
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        print("DEBUG: Publish request failed:", str(exc))
         messages.error(
             request,
             "Publishing failed. Please check the client website API."
         )
 
+    finally:
+        for image_file in opened_files:
+            image_file.close()
+
     return redirect("submit_properties")
+
 
 
 # =========================================================
@@ -691,4 +729,99 @@ def make_available(request, id):
 
     return redirect("submit_properties")
 
-api_url = settings.CLIENT_WEBSITE_API_URL
+def sync_property_status(property_obj):
+    api_url = settings.CLIENT_WEBSITE_STATUS_API_URL
+    api_token = settings.RECEIVE_PROPERTY_API_TOKEN
+
+    data = {
+        "source_property_id": str(property_obj.id),
+        "available": str(property_obj.available).lower(),
+        "published": str(property_obj.published).lower(),
+    }
+
+    try:
+        response = requests.post(
+            api_url,
+            data=data,
+            headers={
+                "Authorization": "Bearer " + api_token
+            },
+            timeout=20,
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+
+        if not result.get("success"):
+            print("Status sync was not confirmed:", result)
+            return False
+
+        print("Property status synchronized:", result)
+        return True
+
+    except (requests.RequestException, ValueError) as exc:
+        print("Property status sync failed:", str(exc))
+        return False
+
+@require_POST
+def toggle_availability(request, id):
+    property_obj = get_object_or_404(Properties, id=id)
+
+    property_obj.available = not property_obj.available
+    property_obj.save(update_fields=["available"])
+
+    if sync_property_status(property_obj):
+        messages.success(
+            request,
+            "Availability updated on the client website."
+        )
+    else:
+        messages.warning(
+            request,
+            "Sender status updated, but client sync failed. "
+            "Check the server console and try again."
+        )
+
+    return redirect("submit_properties")
+
+
+@require_POST
+def make_unavailable(request, id):
+    property_obj = get_object_or_404(Properties, id=id)
+
+    property_obj.available = False
+    property_obj.save(update_fields=["available"])
+
+    if sync_property_status(property_obj):
+        messages.success(
+            request,
+            "Property marked unavailable on the client website."
+        )
+    else:
+        messages.warning(
+            request,
+            "Property updated locally, but client sync failed."
+        )
+
+    return redirect("submit_properties")
+
+@require_POST
+def make_available(request, id):
+    property_obj = get_object_or_404(Properties, id=id)
+
+    property_obj.available = True
+    property_obj.save(update_fields=["available"])
+
+    if sync_property_status(property_obj):
+        messages.success(
+            request,
+            "Property marked available on the client website."
+        )
+    else:
+        messages.warning(
+            request,
+            "Property updated locally, but client sync failed."
+        )
+
+    return redirect("submit_properties")
